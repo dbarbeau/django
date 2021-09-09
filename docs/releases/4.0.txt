@@ -28,6 +28,47 @@ The Django 3.2.x series is the last to support Python 3.6 and 3.7.
 What's new in Django 4.0
 ========================
 
+``zoneinfo`` default timezone implementation
+--------------------------------------------
+
+The Python standard library's :mod:`zoneinfo` is now the default timezone
+implementation in Django.
+
+This is the next step in the migration from using ``pytz`` to using
+:mod:`zoneinfo`. Django 3.2 allowed the use of non-``pytz`` time zones. Django
+4.0 makes ``zoneinfo`` the default implementation. Support for ``pytz`` is now
+deprecated and will be removed in Django 5.0.
+
+:mod:`zoneinfo` is part of the Python standard library from Python 3.9. The
+``backports.zoneinfo`` package is automatically installed alongside Django if
+you are using Python 3.8.
+
+To the extent that you are always operating on aware datetimes with UTC, then
+the move to ``zoneinfo`` should be largely transparent.
+
+If though you are you are working with non-UTC time zones, you will need to
+audit your code, since ``pytz`` and ``zoneinfo`` are not entirely equivalent:
+
+* The transitional :setting:`USE_DEPRECATED_PYTZ` setting is provided to
+  continue using ``pytz`` during the 4.x release cycle. This setting will be
+  removed in Django 5.0.
+
+* Usages of :func:`django.utils.timezone.activate`,
+  :func:`django.utils.timezone.override`, or the :setting:`DATABASE-TIME_ZONE`
+  setting, as well as calls to the ``pytz`` ``normalize()`` or ``localize()``
+  functions are candidate locations for review.
+
+* The ``is_dst`` argument to :func:`django.utils.timezone.make_aware`, and
+  functions that proxy to it, is also deprecated, since it has no effect for
+  ``zoneinfo`` time zones.
+
+The Python Core Team maintain a `pytz_deprecation_shim`_ package to assist the
+migration to ``zoneinfo``. Use of this package plus the
+:setting:`USE_DEPRECATED_PYTZ` transitional setting is recommended if you need
+a gradual update path.
+
+.. _pytz_deprecation_shim: https://pytz-deprecation-shim.readthedocs.io/en/latest/index.html
+
 Functional unique constraints
 -----------------------------
 
