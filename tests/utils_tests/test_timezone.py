@@ -26,12 +26,12 @@ if not HAS_PYTZ:
     CET = None
     PARIS_IMPLS = (PARIS_ZI,)
 
-    needs_pytx = unittest.skip('Test requires pytz')
+    needs_pytz = unittest.skip('Test requires pytz')
 else:
     CET = pytz.timezone('Europe/Paris')
     PARIS_IMPLS = (PARIS_ZI, CET)
 
-    def needs_pytx(f):
+    def needs_pytz(f):
         return f
 
 
@@ -48,7 +48,7 @@ class TimezoneTests(SimpleTestCase):
     def test_default_timezone_is_zoneinfo(self):
         self.assertIsInstance(timezone.get_default_timezone(), zoneinfo.ZoneInfo)
 
-    @needs_pytx
+    @needs_pytz
     @ignore_warnings(category=RemovedInDjango50Warning)
     @override_settings(USE_DEPRECATED_PYTZ=True)
     def test_setting_allows_fallback_to_pytz(self):
@@ -197,7 +197,7 @@ class TimezoneTests(SimpleTestCase):
         with self.assertRaises(ValueError):
             timezone.make_aware(datetime.datetime(2011, 9, 1, 12, 20, 30, tzinfo=PARIS_ZI), PARIS_ZI)
 
-    @needs_pytx
+    @needs_pytz
     def test_make_naive_pytz(self):
         self.assertEqual(
             timezone.make_naive(CET.localize(datetime.datetime(2011, 9, 1, 12, 20, 30)), CET),
@@ -221,7 +221,7 @@ class TimezoneTests(SimpleTestCase):
             datetime.datetime(2011, 9, 1, 12, 20, 30, fold=1)
         )
 
-    @needs_pytx
+    @needs_pytz
     @ignore_warnings(category=RemovedInDjango50Warning)
     def test_make_aware_pytz_ambiguous(self):
         # 2:30 happens twice, once before DST ends and once after
@@ -250,7 +250,7 @@ class TimezoneTests(SimpleTestCase):
         self.assertEqual(std.utcoffset(), datetime.timedelta(hours=1))
         self.assertEqual(dst.utcoffset(), datetime.timedelta(hours=2))
 
-    @needs_pytx
+    @needs_pytz
     @ignore_warnings(category=RemovedInDjango50Warning)
     def test_make_aware_pytz_non_existent(self):
         # 2:30 never happened due to DST
@@ -311,7 +311,7 @@ class TimezoneTests(SimpleTestCase):
         with override_settings(USE_TZ=True, TIME_ZONE='UTC'):
             self.assertIs(timezone.get_default_timezone(), timezone.utc)
 
-    @needs_pytx
+    @needs_pytz
     @ignore_warnings(category=RemovedInDjango50Warning)
     @override_settings(USE_DEPRECATED_PYTZ=True)
     def test_get_default_timezone_utc_pytz(self):

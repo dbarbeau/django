@@ -34,9 +34,9 @@ from ..models import Author, DTModel, Fan
 
 HAS_PYTZ = pytz is not None
 if not HAS_PYTZ:
-    needs_pytx = unittest.skip('Test requires pytz')
+    needs_pytz = unittest.skip('Test requires pytz')
 else:
-    def needs_pytx(f):
+    def needs_pytz(f):
         return f
 
 ZONE_CONSTRUCTORS = (zoneinfo.ZoneInfo,)
@@ -1273,7 +1273,7 @@ class DateFunctionWithTimeZoneTests(DateFunctionTests):
                 self.assertEqual(model.melb_time, melb_start_datetime.time())
                 self.assertEqual(model.pacific_time, pacific_start_datetime.time())
 
-    @needs_pytx
+    @needs_pytz
     @ignore_warnings(category=RemovedInDjango50Warning)
     def test_trunc_ambiguous_and_invalid_times(self):
         sao = pytz.timezone('America/Sao_Paulo')
