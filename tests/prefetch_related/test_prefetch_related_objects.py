@@ -1,7 +1,7 @@
 from django.db.models import Prefetch, prefetch_related_objects
 from django.test import TestCase
 
-from .models import Author, Book, Reader
+from .models import Author, Book, Furniture, House, Person, Reader, Bio, Room
 
 
 class PrefetchRelatedObjectsTests(TestCase):
@@ -155,3 +155,40 @@ class PrefetchRelatedObjectsTests(TestCase):
 
         with self.assertNumQueries(0):
             self.assertCountEqual(book1.authors.all(), [self.author1, self.author2])
+
+    def test_prefetch_for_many_to_one_relation_and_to_attr(self):
+        # We have this setup that is traversed by nested prefetches,
+        # custom querysets and `to_attr`.
+        # M1.ForeignKey -> M2 <- 1_1.M3.ForeignKey -> M4
+        # We map these models and attributes to the test "House" schema:
+        # M1.ForeignKey : Furniture.room
+        # M2.reverse_1_1 : Room.house
+        # M3.ForeignKey : House.owner
+        # M4: Person
+
+        # GIVEN FOUR Models with one instance each
+        owner = Person.objects.create(name="Mary")
+        house = House.objects.create(
+            name="Home sweet home", address="Earth", owner=owner
+        )
+        room = Room.objects.create(name="bedroom", house=house)
+        furniture = Furniture.objects.create(name="bed", room=room)
+
+        # THEN prefetching from M1 to M4 should only trigger
+        # 4 DB queries.
+        with self.assertNumQueries(4):
+            qs = Furniture.objects.prefetch_related(
+                Prefetch(
+                    "room__house",
+                    queryset=House.objects.prefetch_related(
+                        Prefetch(
+                            "owner",
+                            queryset=Person.objects.prefetch_related("houses"),
+                            to_attr="prefetch_person",
+                        )
+                    ),
+                    to_attr="prefetched_house",
+                )
+            )
+            prefetched_furniture = qs.get(pk=furniture.pk)
+        breakpoint()

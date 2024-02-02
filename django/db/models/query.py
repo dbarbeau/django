@@ -2375,6 +2375,12 @@ def prefetch_related_objects(model_instances, *related_lookups):
             if prefetcher is not None:
                 obj_to_fetch = [obj for obj in obj_list if not is_fetched(obj)]
 
+            print(
+                f"{level=}, {to_attr=}, {through_attr,} : {through_attrs} - {obj_to_fetch=}"
+            )
+            # if "book" in through_attr:
+            #     breakpoint()
+
             if obj_to_fetch:
                 obj_list, additional_lookups = prefetch_one_level(
                     obj_to_fetch,

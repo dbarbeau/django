@@ -259,6 +259,11 @@ class Person(models.Model):
         ordering = ["id"]
 
 
+class Furniture(models.Model):
+    name = models.CharField(max_length=50)
+    room = models.ForeignKey(Room, models.SET_NULL, null=True)
+
+
 # Models for nullable FK tests
 
 
