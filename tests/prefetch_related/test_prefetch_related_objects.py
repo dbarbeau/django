@@ -1,7 +1,16 @@
 from django.db.models import Prefetch, prefetch_related_objects
 from django.test import TestCase
 
-from .models import Author, Book, Furniture, House, Person, Reader, Bio, Room
+from .models import (
+    Author,
+    Book,
+    Furniture,
+    House,
+    Person,
+    Reader,
+    Room,
+    Television,
+)
 
 
 class PrefetchRelatedObjectsTests(TestCase):
@@ -162,33 +171,31 @@ class PrefetchRelatedObjectsTests(TestCase):
         # M1.ForeignKey -> M2 <- 1_1.M3.ForeignKey -> M4
         # We map these models and attributes to the test "House" schema:
         # M1.ForeignKey : Furniture.room
-        # M2.reverse_1_1 : Room.house
-        # M3.ForeignKey : House.owner
+        # M2.reverse_1_1 : Room.television
+        # M3.ForeignKey : Television.owner
         # M4: Person
 
-        # GIVEN FOUR Models with one instance each
-        owner = Person.objects.create(name="Mary")
-        house = House.objects.create(
-            name="Home sweet home", address="Earth", owner=owner
-        )
+        # GIVEN five Models with one instance each
+        house = House.objects.create(name="Home sweet home", address="Earth")
         room = Room.objects.create(name="bedroom", house=house)
+        tv_owner = Person.objects.create(name="Lucie")
+        tv = Television.objects.create(name="CinemaTV", owner=tv_owner, room=room)
         furniture = Furniture.objects.create(name="bed", room=room)
 
         # THEN prefetching from M1 to M4 should only trigger
         # 4 DB queries.
-        with self.assertNumQueries(4):
-            qs = Furniture.objects.prefetch_related(
+        with self.assertNumQueries(3):
+            qs = Furniture.objects.select_related("room").prefetch_related(
                 Prefetch(
-                    "room__house",
-                    queryset=House.objects.prefetch_related(
+                    "room__television",
+                    queryset=Television.objects.prefetch_related(
                         Prefetch(
                             "owner",
-                            queryset=Person.objects.prefetch_related("houses"),
-                            to_attr="prefetch_person",
+                            queryset=Person.objects.all(),
+                            to_attr="prefetched_owner",
                         )
                     ),
-                    to_attr="prefetched_house",
+                    to_attr="prefetched_television",
                 )
             )
             prefetched_furniture = qs.get(pk=furniture.pk)
-        breakpoint()
