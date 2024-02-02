@@ -2280,7 +2280,6 @@ def prefetch_related_objects(model_instances, *related_lookups):
     Populate prefetched object caches for a list of model instances based on
     the lookups/Prefetch instances given.
     """
-    print("ENTERING prefetch_related_objects")
     if not model_instances:
         return  # nothing to do
 
@@ -2376,12 +2375,6 @@ def prefetch_related_objects(model_instances, *related_lookups):
             if prefetcher is not None:
                 obj_to_fetch = [obj for obj in obj_list if not is_fetched(obj)]
 
-            print(
-                f"{level=}, {to_attr=}, {through_attr=} : {through_attrs=} - {obj_to_fetch=} \n\t({is_fetched=})"
-            )
-            # if "book" in through_attr:
-            #     breakpoint()
-
             if obj_to_fetch:
                 obj_list, additional_lookups = prefetch_one_level(
                     obj_to_fetch,
@@ -2434,8 +2427,6 @@ def prefetch_related_objects(model_instances, *related_lookups):
                     else:
                         new_obj_list.append(new_obj)
                 obj_list = new_obj_list
-
-    print("LEAVING prefetch_related_objects")
 
 
 async def aprefetch_related_objects(model_instances, *related_lookups):
@@ -2542,7 +2533,6 @@ def prefetch_one_level(instances, prefetcher, lookup, level):
     # in a dictionary.
 
     if hasattr(prefetcher, "get_prefetch_querysets"):
-        print(f"A {prefetcher=}")
         (
             rel_qs,
             rel_obj_attr,
@@ -2554,7 +2544,6 @@ def prefetch_one_level(instances, prefetcher, lookup, level):
             instances, lookup.get_current_querysets(level)
         )
     else:
-        print(f"B {prefetcher=}")
         warnings.warn(
             "The usage of get_prefetch_queryset() in prefetch_related_objects() is "
             "deprecated. Implement get_prefetch_querysets() instead.",
