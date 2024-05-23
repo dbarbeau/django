@@ -138,10 +138,6 @@ the choices are:
   provide a well-known inventory of values, such as currencies, countries,
   languages, time zones, etc.
 
-.. versionchanged:: 5.0
-
-    Support for mappings and callables was added.
-
 Generally, it's best to define choices inside a model class, and to
 define a suitably-named constant for each value::
 
@@ -372,10 +368,6 @@ There are some additional caveats to be aware of:
 
         __empty__ = _("(Unknown)")
 
-.. versionchanged:: 5.0
-
-    Support for using enumeration types directly in the ``choices`` was added.
-
 ``db_column``
 -------------
 
@@ -392,8 +384,6 @@ scenes.
 ``db_comment``
 --------------
 
-.. versionadded:: 4.2
-
 .. attribute:: Field.db_comment
 
 The comment on the database column to use for this field. It is useful for
@@ -406,8 +396,6 @@ looking at your Django code. For example::
 
 ``db_default``
 --------------
-
-.. versionadded:: 5.0
 
 .. attribute:: Field.db_default
 
@@ -739,10 +727,6 @@ The default form widget for this field is a :class:`~django.forms.TextInput`.
         database backends, you should be aware that there are restrictions on
         ``max_length`` for some backends. Refer to the :doc:`database backend
         notes </ref/databases>` for details.
-
-    .. versionchanged:: 4.2
-
-        Support for unlimited ``VARCHAR`` columns was added on PostgreSQL.
 
 .. attribute:: CharField.db_collation
 
@@ -1241,8 +1225,6 @@ when :attr:`~django.forms.Field.localize` is ``False`` or
 ``GeneratedField``
 ------------------
 
-.. versionadded:: 5.0
-
 .. class:: GeneratedField(expression, output_field, db_persist=None, **kwargs)
 
 A field that is always computed based on other fields in the model. This field
@@ -1348,13 +1330,13 @@ following optional arguments:
 
 .. attribute:: ImageField.height_field
 
-    Name of a model field which will be auto-populated with the height of the
-    image each time the model instance is saved.
+    Name of a model field which is auto-populated with the height of the image
+    each time an image object is set.
 
 .. attribute:: ImageField.width_field
 
-    Name of a model field which will be auto-populated with the width of the
-    image each time the model instance is saved.
+    Name of a model field which is auto-populated with the width of the image
+    each time an image object is set.
 
 Requires the `Pillow`_ library.
 
@@ -2467,11 +2449,6 @@ Registering and fetching lookups
 The API can be used to customize which lookups are available for a field class
 and its instances, and how lookups are fetched from a field.
 
-.. versionchanged:: 4.2
-
-    Support for registering lookups on :class:`~django.db.models.Field`
-    instances was added.
-
 .. _model-field-attributes:
 
 =========================
@@ -2500,18 +2477,11 @@ Attributes for fields
 
 .. attribute:: Field.hidden
 
-    Boolean flag that indicates if a field is used to back another non-hidden
-    field's functionality (e.g. the ``content_type`` and ``object_id`` fields
-    that make up a ``GenericForeignKey``). The ``hidden`` flag is used to
-    distinguish what constitutes the public subset of fields on the model from
-    all the fields on the model.
-
-    .. note::
-
-        :meth:`Options.get_fields()
-        <django.db.models.options.Options.get_fields()>`
-        excludes hidden fields by default. Pass in ``include_hidden=True`` to
-        return hidden fields in the results.
+    Boolean flag that indicates if a field is hidden and should not be returned
+    by :meth:`Options.get_fields()
+    <django.db.models.options.Options.get_fields>` by default. An example is
+    the reverse field for a :class:`~django.db.models.ForeignKey` with a
+    ``related_name`` that starts with ``'+'``.
 
 .. attribute:: Field.is_relation
 

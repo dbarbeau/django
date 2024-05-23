@@ -32,9 +32,9 @@ restricted subset of the test client API:
   attributes must be supplied by the test itself if required
   for the view to function properly.
 
-.. versionchanged:: 4.2
+.. versionchanged:: 5.1
 
-    The ``headers`` parameter was added.
+    The ``query_params`` parameter was added.
 
 Example
 -------
@@ -89,9 +89,9 @@ difference being that it returns ``ASGIRequest`` instances rather than
 Arbitrary keyword arguments in ``defaults`` are added directly into the ASGI
 scope.
 
-.. versionchanged:: 4.2
+.. versionchanged:: 5.1
 
-    The ``headers`` parameter was added.
+    The ``query_params`` parameter was added.
 
 Testing class-based views
 =========================
@@ -627,10 +627,6 @@ and tear down the test suite.
     Create or override an ``add_arguments(cls, parser)`` class method and add
     custom arguments by calling ``parser.add_argument()`` inside the method, so
     that the :djadmin:`test` command will be able to use those arguments.
-
-    .. versionadded:: 5.0
-
-        The ``durations`` argument was added.
 
 Attributes
 ~~~~~~~~~~

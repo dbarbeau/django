@@ -27,7 +27,6 @@ following settings:
 * :setting:`STATIC_ROOT`
 * :setting:`STATIC_URL`
 * :setting:`STATICFILES_DIRS`
-* :setting:`STATICFILES_STORAGE`
 * :setting:`STATICFILES_FINDERS`
 
 Management Commands
@@ -355,14 +354,7 @@ argument. For example::
     commented out. This :ticket:`may crash on the nonexistent paths <21080>`.
     You should check and eventually strip comments.
 
-.. versionchanged:: 4.2
-
-    Experimental optional support for finding paths to JavaScript modules in
-    ``import`` and ``export`` statements was added.
-
 .. attribute:: storage.ManifestStaticFilesStorage.manifest_hash
-
-.. versionadded:: 4.2
 
 This attribute provides a single hash that changes whenever a file in the
 manifest changes. This can be useful to communicate to SPAs that the assets on
@@ -420,7 +412,7 @@ hashing algorithm.
 .. _`@import`: https://www.w3.org/TR/CSS2/cascade.html#at-import
 .. _`url()`: https://www.w3.org/TR/CSS2/syndata.html#uri
 .. _`Cascading Style Sheets`: https://www.w3.org/Style/CSS/
-.. _`source map`: https://developer.mozilla.org/en-US/docs/Tools/Debugger/How_to/Use_a_source_map
+.. _`source map`: https://firefox-source-docs.mozilla.org/devtools-user/debugger/how_to/use_a_source_map/
 .. _`modules import`: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules#importing_features_into_your_script
 .. _`modules aggregation`: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules#aggregating_modules
 

@@ -35,6 +35,7 @@ from django.test import (
     override_settings,
     skipUnlessDBFeature,
 )
+from django.test.selenium import screenshot_cases
 from django.test.utils import override_script_prefix
 from django.urls import NoReverseMatch, resolve, reverse
 from django.utils import formats, translation
@@ -872,7 +873,7 @@ class AdminViewBasicTest(AdminViewBasicTestCase):
         response = self.client.get(reverse("admin:admin_views_thing_changelist"))
         self.assertContains(
             response,
-            '<div id="changelist-filter">',
+            '<nav id="changelist-filter" aria-labelledby="changelist-filter-header">',
             msg_prefix="Expected filter not found in changelist view",
         )
         self.assertNotContains(
@@ -925,7 +926,10 @@ class AdminViewBasicTest(AdminViewBasicTestCase):
     def test_relation_spanning_filters(self):
         changelist_url = reverse("admin:admin_views_chapterxtra1_changelist")
         response = self.client.get(changelist_url)
-        self.assertContains(response, '<div id="changelist-filter">')
+        self.assertContains(
+            response,
+            '<nav id="changelist-filter" aria-labelledby="changelist-filter-header">',
+        )
         filters = {
             "chap__id__exact": {
                 "values": [c.id for c in Chapter.objects.all()],
@@ -1062,7 +1066,10 @@ class AdminViewBasicTest(AdminViewBasicTestCase):
             "Changelist filter isn't showing options contained inside a model "
             "field 'choices' option named group."
         )
-        self.assertContains(response, '<div id="changelist-filter">')
+        self.assertContains(
+            response,
+            '<nav id="changelist-filter" aria-labelledby="changelist-filter-header">',
+        )
         self.assertContains(
             response,
             '<a href="?surface__exact=x">Horizontal</a>',
@@ -1598,6 +1605,36 @@ class AdminViewBasicTest(AdminViewBasicTestCase):
             '<main id="content-start" class="content" tabindex="-1">',
         )
 
+    def test_footer(self):
+        response = self.client.get(reverse("admin:index"))
+        self.assertContains(response, '<footer id="footer">')
+        self.client.logout()
+        response = self.client.get(reverse("admin:login"))
+        self.assertContains(response, '<footer id="footer">')
+
+    def test_aria_describedby_for_add_and_change_links(self):
+        response = self.client.get(reverse("admin:index"))
+        tests = [
+            ("admin_views", "actor"),
+            ("admin_views", "worker"),
+            ("auth", "group"),
+            ("auth", "user"),
+        ]
+        for app_label, model_name in tests:
+            with self.subTest(app_label=app_label, model_name=model_name):
+                row_id = f"{app_label}-{model_name}"
+                self.assertContains(response, f'<th scope="row" id="{row_id}">')
+                self.assertContains(
+                    response,
+                    f'<a href="/test_admin/admin/{app_label}/{model_name}/" '
+                    f'class="changelink" aria-describedby="{row_id}">Change</a>',
+                )
+                self.assertContains(
+                    response,
+                    f'<a href="/test_admin/admin/{app_label}/{model_name}/add/" '
+                    f'class="addlink" aria-describedby="{row_id}">Add</a>',
+                )
+
 
 @override_settings(
     AUTH_PASSWORD_VALIDATORS=[
@@ -1902,7 +1939,6 @@ class AdminJavaScriptTest(TestCase):
             self.assertContains(response, "vendor/jquery/jquery.min.js")
             self.assertContains(response, "prepopulate.js")
             self.assertContains(response, "actions.js")
-            self.assertContains(response, "collapse.js")
             self.assertContains(response, "inlines.js")
         with override_settings(DEBUG=True):
             response = self.client.get(reverse("admin:admin_views_section_add"))
@@ -1910,7 +1946,6 @@ class AdminJavaScriptTest(TestCase):
             self.assertNotContains(response, "vendor/jquery/jquery.min.js")
             self.assertContains(response, "prepopulate.js")
             self.assertContains(response, "actions.js")
-            self.assertContains(response, "collapse.js")
             self.assertContains(response, "inlines.js")
 
 
@@ -3801,33 +3836,27 @@ class AdminViewStringPrimaryKeyTest(TestCase):
             r"""-_.!~*'() ;/?:@&=+$, <>#%" {}|\^[]`"""
         )
         cls.m1 = ModelWithStringPrimaryKey.objects.create(string_pk=cls.pk)
-        content_type_pk = ContentType.objects.get_for_model(
-            ModelWithStringPrimaryKey
-        ).pk
         user_pk = cls.superuser.pk
-        LogEntry.objects.log_action(
+        LogEntry.objects.log_actions(
             user_pk,
-            content_type_pk,
-            cls.pk,
-            cls.pk,
+            [cls.m1],
             2,
             change_message="Changed something",
+            single_object=True,
         )
-        LogEntry.objects.log_action(
+        LogEntry.objects.log_actions(
             user_pk,
-            content_type_pk,
-            cls.pk,
-            cls.pk,
+            [cls.m1],
             1,
             change_message="Added something",
+            single_object=True,
         )
-        LogEntry.objects.log_action(
+        LogEntry.objects.log_actions(
             user_pk,
-            content_type_pk,
-            cls.pk,
-            cls.pk,
+            [cls.m1],
             3,
             change_message="Deleted something",
+            single_object=True,
         )
 
     def setUp(self):
@@ -3896,7 +3925,7 @@ class AdminViewStringPrimaryKeyTest(TestCase):
                 )
 
     def test_deleteconfirmation_link(self):
-        """ "
+        """
         The link from the delete confirmation page referring back to the
         changeform of the object should be quoted.
         """
@@ -5733,6 +5762,7 @@ class SeleniumTests(AdminSeleniumTestCase):
             title="A Long Title", published=True, slug="a-long-title"
         )
 
+    @screenshot_cases(["desktop_size", "mobile_size", "rtl", "dark", "high_contrast"])
     def test_login_button_centered(self):
         from selenium.webdriver.common.by import By
 
@@ -5744,6 +5774,7 @@ class SeleniumTests(AdminSeleniumTestCase):
         ) - (offset_left + button.get_property("offsetWidth"))
         # Use assertAlmostEqual to avoid pixel rounding errors.
         self.assertAlmostEqual(offset_left, offset_right, delta=3)
+        self.take_screenshot("login")
 
     def test_prepopulated_fields(self):
         """
@@ -6037,6 +6068,7 @@ class SeleniumTests(AdminSeleniumTestCase):
         self.assertEqual(slug1, "this-is-the-main-name-the-best-2012-02-18")
         self.assertEqual(slug2, "option-two-this-is-the-main-name-the-best")
 
+    @screenshot_cases(["desktop_size", "mobile_size", "dark", "high_contrast"])
     def test_collapsible_fieldset(self):
         """
         The 'collapse' class in fieldsets definition allows to
@@ -6051,12 +6083,12 @@ class SeleniumTests(AdminSeleniumTestCase):
             self.live_server_url + reverse("admin:admin_views_article_add")
         )
         self.assertFalse(self.selenium.find_element(By.ID, "id_title").is_displayed())
-        self.selenium.find_elements(By.LINK_TEXT, "Show")[0].click()
+        self.take_screenshot("collapsed")
+        self.selenium.find_elements(By.TAG_NAME, "summary")[0].click()
         self.assertTrue(self.selenium.find_element(By.ID, "id_title").is_displayed())
-        self.assertEqual(
-            self.selenium.find_element(By.ID, "fieldsetcollapser0").text, "Hide"
-        )
+        self.take_screenshot("expanded")
 
+    @screenshot_cases(["desktop_size", "mobile_size", "rtl", "dark", "high_contrast"])
     def test_selectbox_height_collapsible_fieldset(self):
         from selenium.webdriver.common.by import By
 
@@ -6067,7 +6099,7 @@ class SeleniumTests(AdminSeleniumTestCase):
         )
         url = self.live_server_url + reverse("admin7:admin_views_pizza_add")
         self.selenium.get(url)
-        self.selenium.find_elements(By.LINK_TEXT, "Show")[0].click()
+        self.selenium.find_elements(By.TAG_NAME, "summary")[0].click()
         from_filter_box = self.selenium.find_element(By.ID, "id_toppings_filter")
         from_box = self.selenium.find_element(By.ID, "id_toppings_from")
         to_filter_box = self.selenium.find_element(By.ID, "id_toppings_filter_selected")
@@ -6082,7 +6114,9 @@ class SeleniumTests(AdminSeleniumTestCase):
                 + from_box.get_property("offsetHeight")
             ),
         )
+        self.take_screenshot("selectbox-collapsible")
 
+    @screenshot_cases(["desktop_size", "mobile_size", "rtl", "dark", "high_contrast"])
     def test_selectbox_height_not_collapsible_fieldset(self):
         from selenium.webdriver.common.by import By
 
@@ -6111,7 +6145,9 @@ class SeleniumTests(AdminSeleniumTestCase):
                 + from_box.get_property("offsetHeight")
             ),
         )
+        self.take_screenshot("selectbox-non-collapsible")
 
+    @screenshot_cases(["desktop_size", "mobile_size", "rtl", "dark", "high_contrast"])
     def test_first_field_focus(self):
         """JavaScript-assisted auto-focus on first usable form field."""
         from selenium.webdriver.common.by import By
@@ -6128,6 +6164,7 @@ class SeleniumTests(AdminSeleniumTestCase):
             self.selenium.switch_to.active_element,
             self.selenium.find_element(By.ID, "id_name"),
         )
+        self.take_screenshot("focus-single-widget")
 
         # First form field has a MultiWidget
         with self.wait_page_loaded():
@@ -6138,6 +6175,7 @@ class SeleniumTests(AdminSeleniumTestCase):
             self.selenium.switch_to.active_element,
             self.selenium.find_element(By.ID, "id_start_date_0"),
         )
+        self.take_screenshot("focus-multi-widget")
 
     def test_cancel_delete_confirmation(self):
         "Cancelling the deletion of an object takes the user back one page."
@@ -6518,14 +6556,10 @@ class SeleniumTests(AdminSeleniumTestCase):
         )
         self.selenium.get(self.live_server_url + reverse("admin:admin_views_story_add"))
         field_title = self.selenium.find_element(By.CLASS_NAME, "field-title")
-        current_size = self.selenium.get_window_size()
-        try:
-            self.selenium.set_window_size(1024, 768)
+        with self.small_screen_size():
             self.assertIs(field_title.is_displayed(), False)
-            self.selenium.set_window_size(767, 575)
+        with self.mobile_size():
             self.assertIs(field_title.is_displayed(), False)
-        finally:
-            self.selenium.set_window_size(current_size["width"], current_size["height"])
 
     def test_updating_related_objects_updates_fk_selects_except_autocompletes(self):
         from selenium.webdriver import ActionChains
